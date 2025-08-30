@@ -194,7 +194,7 @@ def shared_log() -> None:
                     log_real_path = os.path.realpath(log_path)
                     
                     # Ensure the resolved path is within the log directory
-                    if not (real_path.startswith(log_real_path + os.sep) or real_path == log_real_path):
+                    if os.path.commonpath([real_path, log_real_path]) != log_real_path:
                         self.send_error(403, "Forbidden")
                         return
                     
