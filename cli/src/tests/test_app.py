@@ -20,18 +20,19 @@ class TestAppSecurity(BaseTest):
         with open(self.log_file, "w") as f:
             f.write("test log content")
             
-        # Create a sensitive file outside the log directory
-        self.sensitive_file = os.path.join(self.temp_dir, "..", "sensitive.txt")
-        os.makedirs(os.path.dirname(self.sensitive_file), exist_ok=True)
+        # Create a sensitive file inside a dedicated subdirectory of the temp directory
+        self.sensitive_dir = os.path.join(self.temp_dir, "sensitive_dir")
+        os.makedirs(self.sensitive_dir, exist_ok=True)
+        self.sensitive_file = os.path.join(self.sensitive_dir, "sensitive.txt")
         with open(self.sensitive_file, "w") as f:
             f.write("sensitive data")
     
     def tearDown(self):
         import shutil
-        shutil.rmtree(self.temp_dir, ignore_errors=True)
-        if os.path.exists(self.sensitive_file):
-            os.remove(self.sensitive_file)
-    
+        try:
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
+        except Exception:
+            pass
     @patch.dict(os.environ, {ENV.WEB_LOG: "true", ENV.LOG_PATH: "", ENV.WEB_LOG_PORT: "9000"})
     def test_directory_traversal_vulnerability(self):
         """Test that the shared_log function is vulnerable to directory traversal attacks."""
