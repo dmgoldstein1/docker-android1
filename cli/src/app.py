@@ -183,7 +183,21 @@ def shared_log() -> None:
                     self.wfile.write(html.encode())
                 # open each selected log file
                 else:
-                    p = log_path + self.path
+                    # Validate path to prevent directory traversal attacks
+                    if '..' in self.path:
+                        self.send_error(403, "Forbidden")
+                        return
+                    
+                    # Safely construct the file path
+                    p = os.path.join(log_path, self.path.lstrip('/'))
+                    real_path = os.path.realpath(p)
+                    log_real_path = os.path.realpath(log_path)
+                    
+                    # Ensure the resolved path is within the log directory
+                    if os.path.commonpath([real_path, log_real_path]) != log_real_path:
+                        self.send_error(403, "Forbidden")
+                        return
+                    
                     try:
                         with open(p, "rb") as file:
                             self.send_response(200)
